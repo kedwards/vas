@@ -1,22 +1,29 @@
 ---
 - type: "vb"
-  enabled: false
+  enabled: true
+  sync_disabled: false
   box: "debian/contrib-stretch64"
-  name: "debianhostvm"
+  name: "jenkins-host"
+  guest_update: false
+  update_box: false
   ip_addr: "192.168.100.150"
-  ram: "512"
+  ram: "1024"
   vcpu: "1"
 
 - type: "vb"
   enabled: true
+  sync_disabled: false
   box: "centos/7"
   name: "centoshostvm"
+  guest_update: false
+  update_box: false
   ip_addr: "192.168.58.57"
   ram: "512"
   vcpu: "1"
 
 - type: "aws"
   enabled: false
+  sync_disabled: true
   box: "aws-dummy"
   keypair_name: "kedwards_keca"
   instance_type: "t2.micro"
@@ -30,3 +37,4 @@
     team: "devops"
   security_group: "sg-036a315514f2508f9"
   name: "dockerhostvmaws"
+

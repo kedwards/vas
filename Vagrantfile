@@ -27,8 +27,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                 srv.vm.synced_folder '.', '/vagrant', disabled: machine['sync']
 
                 srv.vm.provision :vai do |ansible|
-                  ansible.inventory_dir='inventory/'
-                  ansible.inventory_filename='vagrant'
+                  ansible.inventory_dir='./'
+                  ansible.inventory_filename='inventory'
                 end
                 
                 case machine['type']
