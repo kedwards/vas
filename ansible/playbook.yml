@@ -1,0 +1,9 @@
+---
+- name: Playbook
+  hosts: all
+  gather_facts: yes
+  become: yes
+  vars:
+    var1: "{{ variable1 }}"
+  roles:
+    - role

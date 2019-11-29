@@ -4,7 +4,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 require 'yaml'
 
-plugins_dependencies = %w(vagrant-aws vagrant-vbguest vagrant-hostsupdater vai)
+plugins_dependencies = %w(vagrant-aws vagrant-hostsupdater vagrant-vbguest vai)
 plugin_status = false
 plugins_dependencies.each do |plugin_name|
     unless Vagrant.has_plugin? plugin_name
@@ -19,20 +19,28 @@ end
 
 machines = YAML.load_file(File.join(File.dirname(__FILE__), 'machines.yml'))
 
+ansible_var_file = File.join(File.dirname(__FILE__), 'ansible/ansible_vars.yml')
+if File.exist?(ansible_var_file)
+    ansible_extra_vars = YAML.load_file(ansible_var_file)
+end
+
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     machines.each_with_index do |machine, index|
         if machine['enabled'] == true
             config.vm.define machine['name'] do |srv|
                 srv.vm.hostname = machine['name']
-                srv.vm.synced_folder '.', '/vagrant', disabled: machine['sync']
-
-                srv.vm.provision :vai do |ansible|
-                  ansible.inventory_dir='./'
-                  ansible.inventory_filename='inventory'
+                
+                srv.vm.provision "ansible_local" do |ansible|
+                    ansible.playbook = "./ansible/playbook.yml"
+                    ansible.config_file = "./ansible/ansible.cfg"
+                    ansible.verbose = true
+                    ansible.install_mode = "pip"
+                    ansible.extra_vars = ansible_extra_vars
                 end
                 
                 case machine['type']
                 when 'vb'
+                    srv.vm.synced_folder '.', '/vagrant', disabled: machine['sync']
                     srv.vbguest.auto_update = machine['guest_update']
                     srv.vm.box_check_update = machine['update_box']
                     srv.vm.network :private_network, ip: machine['ip_addr']
@@ -42,6 +50,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                         vb.cpus = machine['vcpu']
                         vb.customize [
                             "modifyvm", :id,
+                            "--uartmode1", "disconnected",
                             "--nictype1", "virtio",
                             "--natdnshostresolver1", "on",
                         ]
@@ -62,7 +71,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                         aws.instance_type = machine['instance_type']
                         aws.subnet_id = machine['subnet_id']
                         aws.security_groups = machine['security_group']
-                        aws.associate_public_ip = machine['associate_public_ip']
+                        aws.associate_public_ip = true
+                        aws.elastic_ip = machine['ip_addr']
                         aws.tenancy = "default"
                         aws.tags = {
                           'Name' => machine['tags']['name'],
