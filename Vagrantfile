@@ -4,7 +4,8 @@ VAGRANTFILE_API_VERSION = "2"
 
 require 'yaml'
 
-plugins_dependencies = %w(vagrant-aws vagrant-hostsupdater vagrant-vbguest vai)
+# 
+plugins_dependencies = %w(vagrant-hostsupdater vagrant-vbguest vai)
 plugin_status = false
 plugins_dependencies.each do |plugin_name|
     unless Vagrant.has_plugin? plugin_name
@@ -30,14 +31,23 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             config.vm.define machine['name'] do |srv|
                 srv.vm.hostname = machine['name']
                 
-                srv.vm.provision "ansible_local" do |ansible|
-                    ansible.playbook = "./ansible/playbook.yml"
-                    ansible.config_file = "./ansible/ansible.cfg"
-                    ansible.verbose = true
-                    ansible.install_mode = "pip"
-                    ansible.extra_vars = ansible_extra_vars
+                if machine['ansible']['install'] == "local"
+                    srv.vm.provision "ansible_local" do |ansible|
+                        ansible.playbook = "./ansible/playbook.yml"
+                        ansible.config_file = "./ansible/ansible.cfg"
+                        ansible.verbose = true
+                        ansible.install_mode = "pip"
+                        ansible.extra_vars = ansible_extra_vars
+                    end
+                elsif machine['ansible']['install'] == "host"
+                    config.vm.provision "ansible" do |ansible|
+                        ansible.playbook = "./ansible/playbook.yml"
+                        ansible.config_file = "./ansible/ansible.cfg"
+                        ansible.verbose = true
+                        ansible.extra_vars = ansible_extra_vars
+                    end
                 end
-                
+
                 case machine['type']
                 when 'vb'
                     srv.vm.synced_folder '.', '/vagrant', disabled: machine['sync']
@@ -52,8 +62,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                             "modifyvm", :id,
                             "--uartmode1", "disconnected",
                             "--nictype1", "virtio",
-                            "--natdnshostresolver1", "on",
+                            "--natdnshostresolver1", "on"
                         ]
+                        
+                        if machine['usb_enabled'] === true
+                            machine['usb'].each do |usb, index|
+                                vb.customize ["modifyvm", :id, "--usb", "on"]
+                                vb.customize ['usbfilter', 'add', #{index}, '--target', :id, '--name', #{usb.name}, '--vendorid', #{usb.vendorid}, '--productid', #{usb.productid}]
+                            end
+                        end
                     end
 
                 when 'aws'
