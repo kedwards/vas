@@ -16,4 +16,12 @@ A simple vagrant project starter
 
 # Clean for your own use
 
-git clone --depth=1 git@github.com:kedwards/vagrant-shell.git && rm -rf vagrant-shell/.git\*
+```sh
+wget -O - https://raw.githubusercontent.com/kedwards/vagrant-shell/master/install.sh | sudo bash -s <project-name> <sudo_password>
+```
+
+```sh
+git clone --depth=1 git@github.com:kedwards/vagrant-shell.git && \
+rm -rf vagrant-shell/.git\* && \
+mv vagrant-shell <project-name>
+```

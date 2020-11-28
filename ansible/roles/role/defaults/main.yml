@@ -1,2 +1,5 @@
 ---
+packages:
+  - unzip
+
 var1: default-variable

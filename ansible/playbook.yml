@@ -4,6 +4,6 @@
   gather_facts: yes
   become: yes
   vars:
-    var1: "{{ variable1 }}"
+    var1: vagrant shell completed!
   roles:
     - role

@@ -1,14 +1,16 @@
 ---
+# https://app.vagrantup.com/boxes/search
 - type: "vb"
   enabled: true
   sync_disabled: false
-  box: "ubuntu/bionic64"
+  box: "hashicorp/bionic64"
   name: "rtls"
   guest_update: false
   update_box: false
   ip_addr: "192.168.2.10"
   ram: "2048"
   vcpu: "2"
+  usb_enabled: false
   usb:
     - name: "SanDisk"
       vendorid: "0x0781"

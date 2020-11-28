@@ -4,7 +4,6 @@ VAGRANTFILE_API_VERSION = "2"
 
 require 'yaml'
 
-# 
 plugins_dependencies = %w(vagrant-hostsupdater vagrant-vbguest vai)
 plugin_status = false
 plugins_dependencies.each do |plugin_name|
