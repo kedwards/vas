@@ -30,6 +30,6 @@ VAGRANT_SHELL=/home/${SUDO_USER}/${PROJECT}
 
 if [ ! -d ${VAGRANT_SHELL} ]
 then
-  git clone --depth=1 git@github.com:kedwards/vagrant-shell.git ${VAGRANT_SHELL} && \
+  git clone --depth=1 https://github.com/kedwards/vagrant-shell.git ${VAGRANT_SHELL} && \
   rm -rf ${VAGRANT_SHELL}/.git\*
 fi
