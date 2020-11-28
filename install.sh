@@ -26,7 +26,7 @@ else
   SUDO_PASS=$1
 fi
 
-VAGRANT_SHELL=/home/${SUDO_USER}/${PROJECT}
+VAGRANT_SHELL=${PROJECT}
 
 if [ ! -d ${VAGRANT_SHELL} ]
 then
