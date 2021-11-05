@@ -10,8 +10,6 @@ A simple vagrant project starter
 
 - [vbguest](https://github.com/dotless-de/vagrant-vbguest) -  A Vagrant plugin to keep your VirtualBox Guest Additions up to date
 
-- [hostsupdater](https://github.com/cogitatio/vagrant-hostsupdater) - This plugin adds an entry to your /etc/hosts file on the host system.
-
 - [vagrant-aws](https://github.com/mitchellh/vagrant-aws) - Use Vagrant to manage your EC2 and VPC instances.
 
 # Clean for your own use

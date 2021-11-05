@@ -4,7 +4,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 require 'yaml'
 
-plugins_dependencies = %w(vagrant-vbguest vai)
+plugins_dependencies = %w(vagrant-aws vagrant-vbguest vai)
 plugin_status = false
 plugins_dependencies.each do |plugin_name|
   unless Vagrant.has_plugin? plugin_name
