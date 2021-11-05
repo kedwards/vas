@@ -1,7 +1,7 @@
 ---
 # https://app.vagrantup.com/boxes/search
 - type: "vb"
-  enabled: true
+  enabled: false
   sync_disabled: false
   box: "hashicorp/bionic64"
   name: "rtls"
@@ -17,6 +17,30 @@
       productid: "0x5583"
   ansible:
     install: "host"
+
+- type: "docker"
+  enabled: true
+  box: "nginx:latest"
+  ports: "8081:80"
+  name: "node01"
+  ansible:
+    install: "none"
+
+- type: "docker"
+  enabled: true
+  box: "nginx:latest"
+  ports: "8082:80"
+  name: "node02"
+  ansible:
+    install: "none"
+
+- type: "docker"
+  enabled: true
+  box: "nginx:latest"
+  ports: "8083:80"
+  name: "node03"
+  ansible:
+    install: "none"
 
 - type: "aws"
   enabled: false
