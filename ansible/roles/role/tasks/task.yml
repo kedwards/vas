@@ -8,4 +8,4 @@
 
 - name: Task
   debug:
-    msg: "{ var1 }}"
+    msg: "{{ var1 }}"
