@@ -1,0 +1,21 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: instance
+    # image: ${MOLECULE_DISTRO:-"docker.io/pycontribs/centos:8"}
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-centos8}-ansible:latest"
+    pre_build_image: true
+    privileged: true
+provisioner:
+  name: ansible
+  lint:
+    name: ansible-lint
+verifier:
+  name: ansible
+lint: |
+  set -e
+  yamllint .
+  ansible-lint

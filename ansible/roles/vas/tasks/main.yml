@@ -1,0 +1,5 @@
+---
+# tasks file for vas
+- name: Display vas variable
+  debug:
+    msg: "{{ vas_variable }}"

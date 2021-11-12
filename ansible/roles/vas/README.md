@@ -27,37 +27,6 @@ Including an example of how to use your role (for instance, with variables passe
       roles:
          - { role: username.rolename, x: 42 }
 
-Folder Structure
-----------------
-
-tasks - contains the main list of tasks to be executed by the role.
-
-handlers - contains handlers, which may be used by this role or even anywhere outside this role.
-
-defaults - default variables for the role (see Variables for more information).
-
-vars - other variables for the role (see Variables for more information).
-
-files - contains files which can be deployed via this role.
-
-templates - contains templates which can be deployed via this role.
-
-meta - defines some meta data for this role. See below for more details.
-
-
-Variables
----------
-
-If multiple variables of the same name are defined in different places, they win in a certain order, which is:
-
-- extra vars (-e in the command line) always win
-- then comes connection variables defined in inventory (ansible_ssh_user, etc)
-- then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
-- then comes the rest of the variables defined in inventory
-- then comes facts discovered about a system
-- then "role defaults", which are the most "defaulty" and lose in priority to everything.
-
-
 License
 -------
 
@@ -67,4 +36,3 @@ Author Information
 ------------------
 
 An optional section for the role authors to include contact information, or a website (HTML is not allowed).
-

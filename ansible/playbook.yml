@@ -1,9 +1,0 @@
----
-- name: Playbook
-  hosts: all
-  gather_facts: yes
-  become: yes
-  vars:
-    var1: vagrant shell completed!
-  roles:
-    - role

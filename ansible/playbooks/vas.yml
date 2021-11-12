@@ -1,0 +1,8 @@
+---
+- name: vas playbook
+  hosts: all
+  gather_facts: yes
+  vars:
+    vas_variable: vas completed succesfully!
+  roles:
+    - vas

@@ -1,8 +1,8 @@
-# Vagrant Shell
+# vas
 
-A simple vagrant project starter
+A simple vagrant ansible shell package
 
-# Host Requirements:
+# Host Recmmended Requirements:
 
 - [Vagrant](https://www.vagrantup.com/) - Development Environments Made Easy
 
@@ -15,11 +15,20 @@ A simple vagrant project starter
 # Clean for your own use
 
 ```sh
-wget -O - https://raw.githubusercontent.com/kedwards/vagrant-shell/master/install.sh | sudo bash -s <project-name> <sudo_password>
+wget -O - https://raw.githubusercontent.com/kedwards/vas/master/install.sh | sudo bash -s <project-name> <sudo_password>
 ```
 
+or
+
 ```sh
-git clone --depth=1 git@github.com:kedwards/vagrant-shell.git && \
-rm -rf vagrant-shell/.git\* && \
-mv vagrant-shell <project-name>
+git clone --depth=1 git@github.com:kedwards/vas.git && \
+rm -rf vas/.git\* && \
+mv vas <project-name>
+```
+
+# Test
+
+```
+cd vagrant
+vagrant up
 ```

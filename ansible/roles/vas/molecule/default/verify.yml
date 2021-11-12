@@ -1,0 +1,12 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  vars:
+    - vas_variable: vas role completed succesfully!
+  tasks:
+    - name: Example assertion
+      assert:
+        that: "vas_variable == 'vas role completed succesfully!'"
