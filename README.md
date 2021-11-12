@@ -1,6 +1,6 @@
 # vas
 
-A simple vagrant ansible shell package
+A simple vagrant ansible shell package - *renamed 
 
 # Host Recmmended Requirements:
 
