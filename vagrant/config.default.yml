@@ -8,37 +8,35 @@ use: vas
 # installed if not found
 # https://www.vagrantup.com/docs/plugins, https://vagrant-lists.github.io/plugins.html
 plugins:
-  - vai
-  - vagrant-vbguest
-  # - vagrant-aws # required for type aws
+  - vai # write ansible inventory
+  - vagrant-vbguest # update guestadditions
+  - vagrant-aws # required for type aws
 
-### config templates
+##### config templates #####
+
 vb: &vb
   type: vb
   # virtualbox name, appended with node count (0 based, vb01)
   name_prefix: vb
   nodes: 1
   box: bento/ubuntu-21.04 # *REQUIRED as no base box is configured.
-  ram: 512
-  vcpu: 1
+  memory: 1024
+  cpus: 1
+  os_disk: 10 GB
   disks: 0  # additional disks to attach
   disk_size: '50 GB'
   disk_type: 'SATA Controller'  # disk controller type, 'SATA Controller' or 'SCSI'
-  box_check_update: false
   check_guest_additions: false
+  box_check_update: false
   synced_folder_disabled: true
   ip_addr: 192.168.2. # ipadress prefix, ip will be string concated by count of nodes, starting at 1
   netmask: 255.255.255.0
-  # list of provisioners, ansible is always the last provisioner to run
-  provisioner:
-    - type: ansible
-      ask_become_pass: true
-      playbook: ../ansible/playbooks/vas.yml
-      config_file: ../ansible/ansible.cfg
-      inventory_path: ../ansible/inventory
-    - type: vai
-      path: ../ansible/inventory
-      filename: vagrant_ansible_inventory
+  customize:
+    # Enabling DNS proxy in NAT mode --natdnsproxy1
+    # Using the host's resolver as a DNS proxy in NAT mode --natdnshostresolver1
+    - description:
+      command: --natdnshostresolver1
+      value: 'on'
 
 aws: &aws
   nodes: 1
@@ -63,14 +61,41 @@ docker: &docker
   nodes: 1
   name_prefix: alpine
   image: alpine
-###
+
+# list of provisioners
+provisioner:
+  - description: provision ansible inventory file on host
+    type: vai
+    path: ../ansible/inventory
+    filename: vagrant_ansible_inventory
+    ansible_groups:
+        - name: proxy_nodes
+          nodes:
+            - proxy01
+  - description: provision via ansible
+    type: ansible
+    ask_become_pass: true
+    playbook: ../ansible/playbooks/vas.yml
+    config_file: ../ansible/ansible.cfg
+    inventory_path: ../ansible/inventory
+  - description: provision docker via shell script
+    type: shell
+    privileged: true
+    script: |
+      echo Installing Docker...
+      curl -sSL https://get.docker.com/ | sh
+      sudo usermod -aG docker vagrant
+
+##### config templates #####
 
 vas:
   - description: test 2 node vms
     <<: *vb
     nodes: 2
 
-# sample configurations
+
+##### sample configurations
+
 # vbox_usb:
 #   - description: Machine with usb
 #     <<: *vb
@@ -93,8 +118,70 @@ vas:
 #   - description: Machine with docker installed
 #     <<: *vb
 #     name_prefix: vdocker
-#   - shell:
-#     script: |
-#       echo Installing Docker...
-#       curl -sSL https://get.docker.com/ | sh
-#       sudo usermod -aG docker vagrant
+#     provisioner:
+#     - description: provision docker via shell script
+#       type: shell
+#       privileged: true
+#       script: |
+#         echo Installing Docker...
+#         curl -sSL https://get.docker.com/ | sh
+#         sudo usermod -aG docker vagrant
+
+# swarm:
+#   - description: HA Proxy
+#     name: proxy
+#     <<: *vb
+#     name_prefix: proxy
+#     ip_addr: 192.168.5.
+#   - description: Swarm Managers
+#     name: managers
+#     <<: *vb
+#     nodes: 3
+#     name_prefix: manager
+#     ip_addr: 192.168.5.1
+#   - description: Swarm Workers
+#     name: workers
+#     <<: *vb
+#     nodes: 3
+#     name_prefix: worker
+#     ip_addr: 192.168.5.2
+#   - description: Provisioner
+#     name: provisioner
+#     type: provisioner
+#     provision:
+#       - description: Vai provisioner
+#         type: vai
+#         hosts: all
+#         path: ../ansible/inventory
+#         filename: vagrant_ansible_inventory
+#         ansible_groups:
+#           - name: proxy_nodes
+#             nodes:
+#               - proxy01
+#           - name: swarm_managers
+#             nodes:
+#               - manager01
+#               - manager02
+#               - manager03
+#           - name: swarm_workers
+#             nodes:
+#               - manager01
+#               - manager02
+#               - manager03
+#           - name: gluster_nodes
+#             nodes:
+#               - manager01
+#               - manager02
+#               - manager03
+#           - name: docker:children
+#             nodes:
+#               - proxy_nodes
+#               - swarm_managers
+#               - swarm_workers
+#       - description: Ansible provisioner
+#         type: ansible
+#         hosts: all
+#         ask_become_pass: true
+#         playbook: ../ansible/playbooks/deploy-swarm.yml
+#         config_file: ../ansible/ansible.cfg
+#         inventory_path: ../ansible/inventory
