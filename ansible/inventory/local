@@ -1,5 +1,4 @@
 localhost ansible_connection=local
-template02 ansible_connection=local
 
 [admins]
 localhost
@@ -9,5 +8,4 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_connection=ssh
 ansible_user=vagrant
 ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key
-device2_hdd_dev=/dev/sdb
-variable1=vagrant-shell
+device2_hdd_dev=/dev/sdc

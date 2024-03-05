@@ -1,0 +1,9 @@
+---
+- name: Check if Swarm is Already Initialized
+  shell: docker node ls
+  register: swarm_status
+  ignore_errors: true
+
+- name: Add Managers to the Swarm
+  shell: "docker swarm join --token {{ join_token }} {{ join_address }}"
+  when: swarm_status.rc != 0

@@ -1,27 +1,30 @@
 VAGRANTFILE_API_VERSION = "2"
 VAGRANT_ROOT = File.dirname(File.expand_path(__FILE__))
 require 'yaml'
+require 'getoptlong'
 
-#
-# This fixes the issue with up --provider=aws
-# .vagrant.d/gems/2.4.9/gems/vagrant-aws-0.7.2/lib/vagrant-aws/action/connect_aws.rb:41:in `call': undefined method `except' for #<Hash:0x0000000101596148> (NoMethodError)
-#
-# It looks like a change to the i18n package which was upgraded with Vagrant 2.2.7.
-#
-# They originally provided Hash.except: https://github.com/ruby-i18n/i18n/blob/1e67c8dd80933703328be524d3d8c4f21cb8c5a3/lib/i18n/core_ext/hash.rb
-# Now it's https://github.com/ruby-i18n/i18n/blob/741add9dba3fe8189454f47c5774b45211ab11a9/lib/i18n/core_ext/hash.rb
-#
-# https://github.com/mitchellh/vagrant-aws/issues/566#issuecomment-580812210
-#
-class Hash
-  def slice(*keep_keys)
-    h = {}
-    keep_keys.each { |key| h[key] = fetch(key) if has_key?(key) }
-    h
-  end unless Hash.method_defined?(:slice)
-  def except(*less_keys)
-    slice(*keys - less_keys)
-  end unless Hash.method_defined?(:except)
+opts = GetoptLong.new(
+  [ '--use', GetoptLong::OPTIONAL_ARGUMENT ]
+)
+use = nil
+opts.ordering=(GetoptLong::REQUIRE_ORDER) 
+opts.each do |opt, arg|
+  case opt
+    when '--use'
+      use = arg
+  end
+end
+
+# The problem is related to the Ruby 3.1 / Psych 4.x incompatibility described in this issue: https://bugs.ruby-lang.org/issues/17866
+# Ruby 3.0 comes with Psych 3, while Ruby 3.1 comes with Psych 4, which has a major breaking change
+#     The new YAML loading methods (Psych 4) do not load aliases unless they get the aliases: true argument.
+#     The old YAML loading methods (Psych 3) do not support the aliases keyword.
+module YAML
+  def self.properly_load_file(path)
+    YAML.load_file path, aliases: true
+  rescue ArgumentError
+    YAML.load_file path
+  end
 end
 
 #
@@ -31,17 +34,22 @@ config = nil
 (['config.default.yml', 'config.yml']).each do |config_file|
   config_file = File.join(File.dirname(__FILE__), config_file)
   if File.exist?(config_file)
-    config = YAML.load_file(config_file)
+    config = YAML.properly_load_file(config_file)
   end
 end
 if config.nil?
   puts "No configuration found"
   exit 1
-elsif config[config['use']].nil?
+# use cli --use=<config> if available
+elsif not use.nil?
+  cfg = config[use]
+# use config variable if set
+elsif not config[config['use']].nil?
+  cfg = config[config['use']]
+else
   puts "No configuration for #{config['use']}"
   exit 1
 end
-cfg = config[config['use']]
 
 provisioner = false
 provisoner_grp_index = nil
@@ -86,7 +94,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                   d.image = grp['image']
                   if not grp['ports'].nil?
                     (grp['ports']).each_with_index do |port, port_index|
-                      if (not port['host'].nil?) && (not port['guest'].nil?)
+                      if (not port[0]['host'].nil?) && (not port[0]['guest'].nil?)
                         d.ports = ["#{port['host']}:#{port['guest']}"]
                       end
                     end
@@ -166,7 +174,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                       srv.vm.provision p['type'] do |a|
                         a.playbook = p['playbook']
                         a.config_file = p['config_file']
-                        a.ask_become_pass = p['ask_become_pass']
+                         # a.ask_become_pass = p['ask_become_pass']
                         a.verbose = true
                         if not p['hosts'].nil?
                           a.limit = p['hosts']

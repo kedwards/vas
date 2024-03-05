@@ -1,0 +1,13 @@
+---
+- name: Install Packages
+  ansible.builtin.apt:
+    name:
+      - ntp
+      - acl
+      - apt-transport-https
+      - gnupg-agent
+      - apache2-utils
+      - software-properties-common
+      - python3-pip
+    state: latest
+    update_cache: yes

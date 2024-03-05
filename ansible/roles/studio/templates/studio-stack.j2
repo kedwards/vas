@@ -1,0 +1,153 @@
+version: '3.5'
+
+services:
+  redis:
+    image: redis:{{ redis_version }}
+    ports:
+      - {{ redis_port }}:{{ redis_port }}
+    command:
+      -- port {{ redis_port }}
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - {{ rtls_network_name }}
+
+  www:
+    depends_on:
+      - db
+      - redis
+    image: connectglobal/core:{{ studio_version }}
+    ports:
+      - "80"
+      - "443"
+      - "5000:5000/udp"
+      - "5001:5001/udp"
+      - "5000:5000/tcp"
+      - "5001:5001/tcp"
+      - "5100:5100/udp"
+      - "5101:5101/udp"
+    volumes:
+      - persistent_core_migrate:/home/rtlsserver/migrate
+      - persistent_core_plans:/var/www/html/sensmapserver/svgs/uploads/plans
+      - persistent_core_rtlsserver:/home/rtlsserver/persistent
+      - persistent_core_sewiortls:/home/sewiortls
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.studio.rule=Host(`{{ studio_app_name }}.{{ app_domain_name }}`)"
+        - "traefik.http.services.studio.loadbalancer.server.port={{ studio_app_port }}"
+        - "traefik.docker.network={{ traefik_network_name }}"
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - {{ rtls_network_name }}
+      - {{ traefik_network_name }}
+    environment:
+      LOG_CHANNEL: stderr
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: rtls_main
+      DB_USERNAME: laravel_user
+      DB_PASSWORD_FILE: /run/secrets/db_password
+      DB_HOST_SECOND: db
+      DB_PORT_SECOND: 3306
+      DB_DATABASE_SECOND: sensmapserver
+      DB_USERNAME_SECOND: laravel_user
+      DB_PASSWORD_SECOND_FILE: /run/secrets/db_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6380
+      PHPMYADMIN_HOST: phpmyadmin
+    secrets:
+      - source: db_password
+        target: db_password
+
+  rtlsio:
+    depends_on:
+      - www
+    image: connectglobal/rtls-io:{{ studio_version }}
+    volumes:
+      - persistent_core_rtlsserver:/home/rtlsserver/persistent
+      - persistent_core_migrate:/home/rtlsserver/migrate
+      - persistent_rtlsio_state:/home/rtlsio/state
+    networks:
+      - {{ rtls_network_name }}
+    environment:
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+    secrets:
+      - jwt_secret
+
+  db:
+    image: connectglobal/db:{{ studio_version }}
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: laravel_user
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_USERNAME: sewiortls
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    volumes:
+      - persistent_db_dump:/docker-entrypoint-initdb.d/
+      - persistent:/var/lib/mysql
+    networks:
+      - {{ rtls_network_name }}
+    secrets:
+      - db_password
+      - db_root_password
+
+  adminer:
+    image: adminer
+    ports:
+      - "8080"
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.adminer.rule=Host(`{{ studio_dbmngr_name }}.{{ app_domain_name }}`)"
+        - "traefik.http.services.adminer.loadbalancer.server.port={{ studio_dbmngr_port }}"
+        - "traefik.docker.network=web"
+    networks:
+      - {{ rtls_network_name }}
+      - {{ traefik_network_name }}
+
+volumes:
+  persistent:
+    driver: glusterfs
+    name: "gfs/studio_mysql_data"
+  persistent_db_dump:
+    driver: glusterfs
+    name: "gfs/studio_mysql_dump"
+  persistent_core_migrate:
+    driver: glusterfs
+    name: "gfs/studio_migrate"
+  persistent_core_plans:
+    driver: glusterfs
+    name: "gfs/studio_plans"
+  persistent_core_rtlsserver:
+    driver: glusterfs
+    name: "gfs/studio_rtlsserver"
+  persistent_core_sewiortls:
+    driver: glusterfs
+    name: "gfs/studio_rtlsserver"
+  persistent_rtlsio_state:
+    driver: glusterfs
+    name: "gfs/studio_rtlsio"
+
+secrets:
+  db_password:
+    external: true
+  jwt_secret:
+    external: true
+  db_root_password:
+    external: true
+
+networks:
+  {{ rtls_network_name }}:
+    driver: overlay
+    attachable: true
+    name: {{ rtls_network_name }}
+  {{ traefik_network_name }}:
+    external: true
+    name: {{ traefik_network_name }}
+
